@@ -1,37 +1,51 @@
-import React from 'react';
+import { ReactNode } from "react";
 
-interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
-  children: React.ReactNode;
+interface CardProps {
+  children: ReactNode;
+  className?: string;
 }
 
-export function Card({ children, className = '', ...props }: CardProps) {
+interface CardHeaderProps {
+  children: ReactNode;
+  className?: string;
+}
+
+interface CardContentProps {
+  children: ReactNode;
+  className?: string;
+}
+
+export function Card({ children, className = "" }: CardProps) {
   return (
     <div
-      className={`bg-card text-card-foreground rounded-lg border shadow-sm ${className}`}
-      {...props}
+      className={`
+        rounded-lg border border-gray-200 bg-white shadow-sm
+        dark:border-gray-700 dark:bg-gray-800
+        ${className}
+      `}
     >
       {children}
     </div>
   );
 }
 
-export function CardHeader({ children, className = '', ...props }: CardProps) {
+export function CardHeader({ children, className = "" }: CardHeaderProps) {
   return (
     <div
-      className={`flex flex-col space-y-1.5 p-6 ${className}`}
-      {...props}
+      className={`
+        border-b border-gray-200 px-6 py-4
+        dark:border-gray-700
+        ${className}
+      `}
     >
       {children}
     </div>
   );
 }
 
-export function CardBody({ children, className = '', ...props }: CardProps) {
+export function CardContent({ children, className = "" }: CardContentProps) {
   return (
-    <div
-      className={`p-6 pt-0 ${className}`}
-      {...props}
-    >
+    <div className={`p-6 ${className}`}>
       {children}
     </div>
   );
