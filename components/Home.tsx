@@ -1,4 +1,5 @@
-import { Button, Card } from '@heroui/react'
+import { Button } from './ui/Button'
+import { Card } from './ui/Card'
 import DatasetVisualization from './DatasetVisualization'
 
 const features = [
@@ -36,7 +37,7 @@ export default function Home() {
               Advanced deep learning solution for accurate polyp detection and segmentation in colonoscopy images.
             </p>
             <div className="mt-10 flex items-center justify-center gap-x-6">
-              <Button variant="solid" size="lg" color="primary">
+              <Button variant="default" size="lg">
                 Get started
               </Button>
               <Button variant="ghost" size="lg">

@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import { cn } from "../../lib/utils";
 
 interface CardProps {
   children: ReactNode;
@@ -15,15 +16,12 @@ interface CardContentProps {
   className?: string;
 }
 
-export function Card({ children, className = "" }: CardProps) {
+export function Card({ children, className }: CardProps) {
   return (
-    <div
-      className={`
-        rounded-lg border border-gray-200 bg-white shadow-sm
-        dark:border-gray-700 dark:bg-gray-800
-        ${className}
-      `}
-    >
+    <div className={cn(
+      'rounded-lg border border-gray-200 bg-white shadow-sm',
+      className
+    )}>
       {children}
     </div>
   );

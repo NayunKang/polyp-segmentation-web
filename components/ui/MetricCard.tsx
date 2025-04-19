@@ -12,10 +12,10 @@ export function MetricCard({ title, value, className = "" }: MetricCardProps) {
   const percentage = (value * 100).toFixed(2);
   
   // Determine badge variant based on value
-  const getBadgeVariant = (value: number) => {
-    if (value >= 0.8) return "success";
-    if (value >= 0.6) return "warning";
-    return "error";
+  const getBadgeVariant = (value: number): "default" | "secondary" | "destructive" | "outline" => {
+    if (value >= 0.8) return "default";  // success -> default
+    if (value >= 0.6) return "secondary";  // warning -> secondary
+    return "destructive";  // error -> destructive
   };
 
   return (
