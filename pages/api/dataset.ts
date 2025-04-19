@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import fs from 'fs';
 import path from 'path';
+import fs from 'fs';
 
 interface Diagnosis {
   type: 'polyp' | 'cancer' | 'normal';
@@ -15,48 +15,40 @@ interface Diagnosis {
   characteristics?: string[];
 }
 
+interface Result {
+  id: string;
+  image: string;
+  unet_mask: string;
+  otsu_mask: string | null;
+  dice: number;
+  iou: number;
+  precision: number;
+  recall: number;
+  classification: string;
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
   try {
-    // 실제 디렉토리 경로로 수정
-    const imagesDir = path.join(process.cwd(), 'public', 'images');
-    const masksDir = path.join(process.cwd(), 'public', 'masks');
+    // Read the static data file
+    const dataPath = path.join(process.cwd(), 'public', 'data.json');
+    const fileContents = fs.readFileSync(dataPath, 'utf8');
+    const data: Result[] = JSON.parse(fileContents);
 
-    // 이미지 파일 목록 가져오기
-    const imageFiles = fs.readdirSync(imagesDir)
-      .filter(file => file.endsWith('.png') || file.endsWith('.jpg'));
+    const totalCount = data.length;
+    const trainingCount = Math.floor(totalCount * 0.7);
+    const validationCount = Math.floor(totalCount * 0.15);
 
-    // Calculate metrics for each image
-    const dataset = await Promise.all(imageFiles.map(async (filename) => {
-      const id = filename.split('.')[0];
-      const set = assignSet(id);
-
-      // TODO: 실제 메트릭스 계산 함수 구현 필요
-      const metrics = {
-        dice: Math.random(), // 임시 데이터
-        iou: Math.random(),
-        precision: Math.random(),
-        recall: Math.random()
-      };
-
-      // 임시 진단 데이터 생성 (실제로는 모델이나 데이터베이스에서 가져와야 함)
-      const diagnosis: Diagnosis = generateDetailedDiagnosis();
-
-      return {
-        id,
-        image: `/images/${filename}`,
-        unet_mask: `/masks/${id}.jpg`,
-        otsu_mask: null,
-        dice: metrics.dice,
-        iou: metrics.iou,
-        precision: metrics.precision,
-        recall: metrics.recall,
-        classification: diagnosis.type,
-        set
-      };
+    const dataset = data.map((item, index) => ({
+      ...item,
+      set: index < trainingCount 
+        ? 'training' 
+        : index < trainingCount + validationCount 
+          ? 'validation' 
+          : 'test'
     }));
 
     res.status(200).json(dataset);
@@ -64,16 +56,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.error('Error loading dataset:', error);
     res.status(500).json({ message: 'Failed to load dataset' });
   }
-}
-
-// 70/15/15 비율로 데이터셋 분할
-function assignSet(id: string): 'training' | 'validation' | 'test' {
-  const hash = Array.from(id).reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  const value = hash % 100;
-
-  if (value < 70) return 'training';
-  if (value < 85) return 'validation';
-  return 'test';
 }
 
 function generateDetailedDiagnosis(): Diagnosis {
