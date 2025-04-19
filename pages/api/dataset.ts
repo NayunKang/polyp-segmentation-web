@@ -36,22 +36,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Read the static data file
     const dataPath = path.join(process.cwd(), 'public', 'data.json');
     const fileContents = fs.readFileSync(dataPath, 'utf8');
-    const data: Result[] = JSON.parse(fileContents);
+    const data = JSON.parse(fileContents);
 
-    const totalCount = data.length;
-    const trainingCount = Math.floor(totalCount * 0.7);
-    const validationCount = Math.floor(totalCount * 0.15);
-
-    const dataset = data.map((item, index) => ({
-      ...item,
-      set: index < trainingCount 
-        ? 'training' 
-        : index < trainingCount + validationCount 
-          ? 'validation' 
-          : 'test'
-    }));
-
-    res.status(200).json(dataset);
+    res.status(200).json(data);
   } catch (error) {
     console.error('Error loading dataset:', error);
     res.status(500).json({ message: 'Failed to load dataset' });

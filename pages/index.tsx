@@ -40,32 +40,17 @@ export default function Home() {
     async function loadData() {
       try {
         setIsLoading(true);
-        // Setup the dataset
-        const setupResponse = await fetch('/api/setup', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({}),
-        });
-
-        if (!setupResponse.ok) {
-          throw new Error('Failed to setup dataset');
+        // Load the results directly from data.json
+        const response = await fetch('/data.json');
+        if (!response.ok) {
+          throw new Error('Failed to load dataset');
         }
 
-        // Load the results
-        const resultsResponse = await fetch('/api/dataset');
-        if (!resultsResponse.ok) {
-          console.error('Failed to load results:', await resultsResponse.text());
-          throw new Error('Failed to load results');
-        }
-
-        const data = await resultsResponse.json();
-        console.log('API Response:', data);
+        const data = await response.json();
+        console.log('Loaded data:', data);
         
         if (!Array.isArray(data) || data.length === 0) {
-          console.error('Invalid data format:', data);
-          throw new Error('Invalid or empty results data');
+          throw new Error('Invalid or empty dataset');
         }
 
         const totalCount = data.length;
@@ -85,6 +70,7 @@ export default function Home() {
         setFilteredResults(annotatedData);
         setError(null);
       } catch (err) {
+        console.error('Error loading dataset:', err);
         setError(err instanceof Error ? err.message : 'Failed to load dataset');
       } finally {
         setIsLoading(false);
