@@ -23,74 +23,76 @@ interface Result {
   set?: 'training' | 'validation' | 'test';
 }
 
-export async function getStaticProps() {
-  try {
-    // Setup the dataset
-    const setupResponse = await fetch('http://localhost:3000/api/setup', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({}),
-    });
-
-    if (!setupResponse.ok) {
-      throw new Error('Failed to setup dataset');
-    }
-
-    // Load the results
-    const resultsResponse = await fetch('http://localhost:3000/results.json');
-    if (!resultsResponse.ok) {
-      throw new Error('Failed to load results');
-    }
-
-    const data = await resultsResponse.json();
-    
-    if (!Array.isArray(data) || data.length === 0) {
-      throw new Error('Invalid or empty results data');
-    }
-
-    const totalCount = data.length;
-    const trainingCount = Math.floor(totalCount * 0.7);
-    const validationCount = Math.floor(totalCount * 0.15);
-
-    const annotatedData = data.map((item, index) => ({
-      ...item,
-      set: index < trainingCount 
-        ? 'training' 
-        : index < trainingCount + validationCount 
-          ? 'validation' 
-          : 'test'
-    }));
-
-    return {
-      props: {
-        results: annotatedData,
-        error: null,
-      },
-      // Revalidate every hour
-      revalidate: 3600,
-    };
-  } catch (error) {
-    return {
-      props: {
-        results: [],
-        error: error instanceof Error ? error.message : 'Failed to load dataset',
-      },
-    };
-  }
-}
-
-export default function Home({ results: initialResults, error: initialError }) {
-  const [results] = useState<Result[]>(initialResults);
-  const [filteredResults, setFilteredResults] = useState<Result[]>(initialResults);
+export default function Home() {
+  const [results, setResults] = useState<Result[]>([]);
+  const [filteredResults, setFilteredResults] = useState<Result[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSet, setSelectedSet] = useState<'all' | 'training' | 'validation' | 'test'>('all');
   const [selectedResult, setSelectedResult] = useState<Result | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 9;
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        setIsLoading(true);
+        // Setup the dataset
+        const setupResponse = await fetch('/api/setup', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({}),
+        });
+
+        if (!setupResponse.ok) {
+          throw new Error('Failed to setup dataset');
+        }
+
+        // Load the results
+        const resultsResponse = await fetch('/api/dataset');
+        if (!resultsResponse.ok) {
+          console.error('Failed to load results:', await resultsResponse.text());
+          throw new Error('Failed to load results');
+        }
+
+        const data = await resultsResponse.json();
+        console.log('API Response:', data);
+        
+        if (!Array.isArray(data) || data.length === 0) {
+          console.error('Invalid data format:', data);
+          throw new Error('Invalid or empty results data');
+        }
+
+        const totalCount = data.length;
+        const trainingCount = Math.floor(totalCount * 0.7);
+        const validationCount = Math.floor(totalCount * 0.15);
+
+        const annotatedData = data.map((item, index) => ({
+          ...item,
+          set: index < trainingCount 
+            ? 'training' 
+            : index < trainingCount + validationCount 
+              ? 'validation' 
+              : 'test'
+        }));
+
+        setResults(annotatedData);
+        setFilteredResults(annotatedData);
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load dataset');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadData();
+  }, []);
 
   // Filter results when search term or selected set changes
   useEffect(() => {
@@ -127,20 +129,32 @@ export default function Home({ results: initialResults, error: initialError }) {
     setCurrentPage(pageNumber);
   };
 
-  if (initialError) {
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-center">
+          <Spinner className="w-12 h-12 mb-4" />
+          <p className="text-gray-600 dark:text-gray-300">Loading dataset...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
     return (
       <Card className="mx-auto max-w-lg">
         <CardHeader>
           <h3 className="text-red-800 dark:text-red-400 font-semibold">Error</h3>
         </CardHeader>
         <CardContent>
-          <p className="text-red-600 dark:text-red-300">{initialError}</p>
-          <button
+          <p className="text-red-600 dark:text-red-300">{error}</p>
+          <Button
             onClick={() => window.location.reload()}
-            className="mt-4 px-4 py-2 bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100 rounded hover:bg-red-200 dark:hover:bg-red-700 transition-colors"
+            className="mt-4"
+            variant="default"
           >
             Try Again
-          </button>
+          </Button>
         </CardContent>
       </Card>
     );

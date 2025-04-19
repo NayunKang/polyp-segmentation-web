@@ -48,10 +48,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return {
         id,
         image: `/images/${filename}`,
-        mask: `/masks/${id}.jpg`,
-        set,
-        metrics,
-        diagnosis
+        unet_mask: `/masks/${id}.jpg`,
+        otsu_mask: null,
+        dice: metrics.dice,
+        iou: metrics.iou,
+        precision: metrics.precision,
+        recall: metrics.recall,
+        classification: diagnosis.type,
+        set
       };
     }));
 
