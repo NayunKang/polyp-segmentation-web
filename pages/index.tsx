@@ -1,5 +1,4 @@
 import Head from 'next/head';
-import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardContent } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
@@ -43,7 +42,7 @@ export default function Home() {
         // Load the results directly from data.json
         const response = await fetch('/data.json');
         if (!response.ok) {
-          throw new Error('Failed to load dataset');
+          throw new Error(`Failed to load dataset: ${response.status} ${response.statusText}`);
         }
 
         const data = await response.json();
@@ -209,51 +208,46 @@ export default function Home() {
           </div>
 
           {/* Results Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {currentResults.map((result) => (
-              <Card key={result.id} className="overflow-hidden">
-                <CardHeader className="p-4">
-                  <div className="flex justify-between items-center">
-                    <h3 className="text-lg font-semibold">ID: {result.id}</h3>
-                    <Badge>{result.set}</Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-4">
-                  <div className="relative aspect-square mb-4">
-                    <Image
-                      src={result.image}
-                      alt={`Image ${result.id}`}
-                      layout="fill"
-                      objectFit="cover"
-                      className="rounded"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <p className="text-sm text-gray-500">Precision</p>
-                      <p className="font-semibold">{(result.precision * 100).toFixed(1)}%</p>
+              <Card 
+                key={result.id}
+                className="cursor-pointer hover:shadow-lg transition-shadow"
+              >
+                <div onClick={() => setSelectedResult(result)}>
+                  <CardContent className="p-4">
+                    <div className="aspect-w-16 aspect-h-9 mb-4 relative overflow-hidden rounded-lg">
+                      <img
+                        src={`/images/${result.id}.jpg`}
+                        alt={`Polyp image ${result.id}`}
+                        className="object-cover w-full h-full"
+                      />
                     </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Recall</p>
-                      <p className="font-semibold">{(result.recall * 100).toFixed(1)}%</p>
+                    <div className="space-y-2">
+                      <h3 className="font-medium">{result.id}</h3>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Badge variant="outline">
+                          Dice: {result.dice.toFixed(3)}
+                        </Badge>
+                        <Badge variant="outline">
+                          IoU: {result.iou.toFixed(3)}
+                        </Badge>
+                        <Badge variant="outline">
+                          Precision: {result.precision.toFixed(3)}
+                        </Badge>
+                        <Badge variant="outline">
+                          Recall: {result.recall.toFixed(3)}
+                        </Badge>
+                      </div>
+                      <Badge className="mt-2" variant={
+                        result.set === 'training' ? 'default' :
+                        result.set === 'validation' ? 'outline' : 'secondary'
+                      }>
+                        {result.set}
+                      </Badge>
                     </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Dice</p>
-                      <p className="font-semibold">{(result.dice * 100).toFixed(1)}%</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">IoU</p>
-                      <p className="font-semibold">{(result.iou * 100).toFixed(1)}%</p>
-                    </div>
-                  </div>
-                  <Button
-                    variant="outline"
-                    className="w-full mt-4"
-                    onClick={() => setSelectedResult(result)}
-                  >
-                    View Details
-                  </Button>
-                </CardContent>
+                  </CardContent>
+                </div>
               </Card>
             ))}
           </div>
