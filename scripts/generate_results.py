@@ -42,18 +42,18 @@ def generate_results():
                 "image": f"/images/{image_id}.jpg",
                 "unet_mask": f"/masks/{image_id}.jpg",
                 "otsu_mask": None,
+                "classification": "polyp",
                 **metrics
             }
             results.append(result)
     
-    # results.json 파일 생성
-    output_file = Path("data") / "results.json"
-    output_file.parent.mkdir(exist_ok=True)
+    # data.json 파일을 public 디렉토리에 생성
+    output_file = public_dir / "data.json"
     
     with output_file.open("w", encoding="utf-8") as f:
         json.dump(results, f, indent=2)
     
-    print(f"Generated results.json with {len(results)} entries")
+    print(f"Generated data.json with {len(results)} entries")
 
 if __name__ == "__main__":
     generate_results()
